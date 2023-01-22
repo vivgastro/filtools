@@ -1,7 +1,6 @@
 #--------------------------------------------------------------------------------------------
 #       Author: VG
 #       Code to quickly visualise dedispersed, time and frequency scrunched filterbank files
-#       Please report any bugs to the author
 #--------------------------------------------------------------------------------------------
 
 import numpy as N
