@@ -169,8 +169,10 @@ def main(args):
         #if f0-fn > 0:
         #    (fn, f0) = (f0, fn)     #This ensures that f0 is the bottom frequency and fn is the top frequency always
         chw = f.header.foff
-        freqs = N.arange(f.header.fch1, f.header.fch1 + chw * nch, chw) 
         
+        #freqs = N.arange(f.header.fch1, f.header.fch1 + chw * nch, chw) 
+        freqs = N.linspace(f.header.fch1, f.header.fch1 + f.header.foff * (f.header.nchans - 1) , f.header.nchans)
+
         if args.start > f.header.tobs:
             print("Sorry, start time: {0} > tobs: {1}".format(args.start, f.header.tobs))
             continue
