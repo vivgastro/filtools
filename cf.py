@@ -169,9 +169,6 @@ def main(args):
         #if f0-fn > 0:
         #    (fn, f0) = (f0, fn)     #This ensures that f0 is the bottom frequency and fn is the top frequency always
         chw = f.header.foff
-        fa = f0 + chw/2*args.freq_sc
-        fb = fn - chw/2*args.freq_sc
-        scrunched_freqs = N.arange(fa, fb + chw*args.freq_sc, chw*args.freq_sc)
         freqs = N.arange(f.header.fch1, f.header.fch1 + chw * nch, chw) 
         
         if args.start > f.header.tobs:
@@ -288,8 +285,18 @@ def main(args):
             zapped_level = zero_level * 0.95
 
             toff=0.5*tres*args.t_sc
+            toff_samps = 0.5 * args.t_sc
+
             x=N.arange(0,len(tseries))*tres*args.t_sc + toff + start_time
+            x_samps = N.arange(0, len(tseries), args.t_sc) + 0.5 * args.t_sc + start
+            
+            fa = f0 + chw/2*args.freq_sc
+            fb = fn - chw/2*args.freq_sc
+            scrunched_freqs = N.arange(fa, fb + chw*args.freq_sc, chw*args.freq_sc)
+            scrunched_chans = N.arange(0, nch, args.freq_sc) + 0.5 * args.freq_sc
+
             extent=[x[0]-toff, x[-1]+toff, fn, f0]
+            extent_samps = [x_samps[0] - toff_samps, x_samps[-1] + toff_samps, nch + 1, 0]
             
             pk = k * len(pols_to_plot) + iip
             fig=M.figure(pk, figsize=(6.5,5))
@@ -299,21 +306,37 @@ def main(args):
             if zapped:
                 zapped_chans = N.where(fseries < 1e-8)[0]
                 zdata[zapped_chans,:]+=zapped_level
-            ax1.imshow(zdata, interpolation='none', aspect='auto', cmap='afmhot', extent=extent)
+            if not args.raw_units:
+                ax1.imshow(zdata, interpolation='none', aspect='auto', cmap='afmhot', extent=extent)
+                ax1.set_ylabel("Freq (MHz)")
+            else:
+                ax1.imshow(zdata, interpolation='none', aspect='auto', cmap='afmhot', extent=extent_samps)
+                ax1.set_ylabel("Freq channels idx")
+                
             ax1.set_title(fil+" De-DM: "+str(args.dedisp)+", pol:{}".format(ipol), fontsize=8)
             ax1.set_xlim(0,tfsdata.shape[1])
-            ax1.set_ylabel("Freq (MHz)")
 
             ax2=M.subplot2grid((6,8), (4,0), rowspan=1, colspan=6, sharex=ax1)
-            ax2.plot(x, tseries, linewidth=0.5)
-            ax2.set_xlim(x[0]-toff, x[-1]+toff)
-            ax2.set_xlabel("Time (s)")
+            if not args.raw_units:
+                ax2.plot(x, tseries, linewidth=0.5)
+                ax2.set_xlim(x[0]-toff, x[-1]+toff)
+                ax2.set_xlabel("Time (s)")
+            else:
+                ax2.plot(x_samps, tseries, linewidth=0.5)
+                ax2.set_xlim(extent_samps[0], extent_samps[1])
+                ax2.set_xlabel("Time (samps)")
+                
             
             ax3 = M.subplot2grid((6,8), (0,6), rowspan = 4, colspan=2, sharey=ax1)
-            ax3.plot(fseries, scrunched_freqs, linewidth=0.5)
+            if not args.raw_units:
+                ax3.plot(fseries, scrunched_freqs, linewidth=0.5)
+                ax3.set_ylim(fn, f0)
+            else:
+                ax3.plot(fseries, scrunched_chans, linewidth=0.5)
+                ax3.set_ylim(nch+1, 0)
+
             ax3.set_xlabel("Power")
             ax3.tick_params(labelsize=8)
-            ax3.set_ylim(fn, f0)
 
             M.subplots_adjust(hspace=0, wspace=0, bottom=0.0)
             M.setp(ax1.get_xticklabels(), visible=False)
@@ -358,6 +381,7 @@ if __name__=="__main__":
             "Or a list of channels delimetered by ',' (e.g. -zapc 100, 200, 400)"+\
             "And/or an inclusive range of channels  separated by ':' (e.g. -zapc 100: 200)")
     a.add_argument("-nuke", "--nuke", type=str, nargs='+', help="nuke F1/F2/F3/Voda?")
+    a.add_argument("--raw-units", action='store_true', help="Plot raw-units instead of physical units (def: False)", default=False)
     
     a.add_argument("-pngs", action='store_true', help="Save pngs instead of plotting")
     a.add_argument("-one", action='store_true', help="Show plots one by one (def=False)", default=False)
