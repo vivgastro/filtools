@@ -292,9 +292,11 @@ def main(args):
             x=N.arange(0,len(tseries))*tres*args.t_sc + toff + start_time
             x_samps = N.arange(0, len(tseries), args.t_sc) + 0.5 * args.t_sc + start
             
-            fa = f0 + chw/2*args.freq_sc
-            fb = fn - chw/2*args.freq_sc
-            scrunched_freqs = N.arange(fa, fb + chw*args.freq_sc, chw*args.freq_sc)
+            scrunched_freqs = N.linspace(f.header.ftop + chw/2 * args.freq_sc, f.header.fbottom - chw / 2 * args.freq_sc, f.header.nchans // args.freq_sc)
+            #fa = f0 + chw/2*args.freq_sc
+            #fb = fn - chw/2*args.freq_sc
+            #scrunched_freqs = N.arange(fa, fb + chw*args.freq_sc, chw*args.freq_sc)
+            #print(f"------> shape of scrunched_freqs = {scrunched_freqs.shape}, fa = {fa}, fb = {fb}, chw= {chw}, freq_sc = {args.freq_sc}")
             scrunched_chans = N.arange(0, nch, args.freq_sc) + 0.5 * args.freq_sc
 
             extent=[x[0]-toff, x[-1]+toff, fn, f0]
