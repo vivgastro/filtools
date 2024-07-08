@@ -151,6 +151,11 @@ def split_pols(data, f):
     split_data = [dpols[:, :, i] for i in range(npols)]
     return split_data
 
+def rescale(data):
+    rms = data.std(axis=-1)
+    mean = data.mean(axis=-1)
+    return (data-mean[:, None])/rms[:, None]
+
 
 def main(args):
     print("Plotting {0} filterbank(s)".format(len(args.fil)))
@@ -218,10 +223,15 @@ def main(args):
             pdata = all_pols[:, :, ipol]
 
             #print nsamp, data.shape
-            if args.dedisp:
-                ddata=pdata.dedisperse(args.dedisp)
+            if args.rescale:
+                rdata = rescale(pdata)
             else:
-                ddata=pdata
+                rdata = pdata
+
+            if args.dedisp:
+                ddata=rdata.dedisperse(args.dedisp)
+            else:
+                ddata=rdata
             
             #if ddata.shape[0]%args.freq_sc!=0:
             #    print "Frequency scrunch factor should exactly divide the no. of channels({0})".format(ddata.shape[0])
@@ -374,6 +384,7 @@ if __name__=="__main__":
     a.add_argument("-ns","--nsamp", type=int, help="No. of time samples to plot, -1 for all", default=None)
     a.add_argument("-p", "--pol", type=str, help="Polarisations to plot separated by ',' (e.g., -p 0,1,2). You can say 'all' for all pols. \
             By default, the 0th polarisation will be plotted.", default=None)
+    a.add_argument("-r", "--rescale", action='store_true', help="Rescale the data to 0 mean and 1 rms (def=False)", default=False)
     a.add_argument("-dd", "--dedisp", type=float, help="Dedispersion DM val (def=0)")
     a.add_argument("-fs","--freq_sc", type=int, help="Freq scrunch factor (def=1)", default=1)
     a.add_argument("-ts","--t_sc", type=int, help="Time scrunch factor (def=1)", default=1)
